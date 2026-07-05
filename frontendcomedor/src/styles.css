@@ -1,0 +1,10 @@
+@import './styles/upeu-theme.css';
+
+body {
+  background: var(--upeu-bg);
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--upeu-font);
+  color: var(--upeu-text);
+  -webkit-font-smoothing: antialiased;
+}

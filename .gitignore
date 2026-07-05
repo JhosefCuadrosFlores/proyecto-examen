@@ -1,0 +1,28 @@
+# Entorno local
+.env
+mysql_data/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Backend (Java / Maven)
+SistemaRestauranteBackend/target/
+SistemaRestauranteBackend/.idea/
+SistemaRestauranteBackend/*.iml
+SistemaRestauranteBackend/.classpath
+SistemaRestauranteBackend/.project
+SistemaRestauranteBackend/.settings/
+SistemaRestauranteBackend/uploads/
+
+# Frontend (Angular / Node)
+frontendcomedor/node_modules/
+frontendcomedor/dist/
+frontendcomedor/.angular/
+frontendcomedor/coverage/
+
+# IDE
+.vscode/
+*.swp
+*.swo

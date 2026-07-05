@@ -1,0 +1,591 @@
+<!-- Header UPeU Admin -->
+<div class="upeu-app">
+<header class="upeu-header">
+  <div class="upeu-header-inner">
+    <div class="upeu-brand">
+      <div class="upeu-logo">
+        <img *ngIf="comedorConfig.logoUrl" [src]="comedorConfig.logoUrl" alt="Logo" class="upeu-logo-img">
+        <i *ngIf="!comedorConfig.logoUrl" class="bi bi-mortarboard-fill"></i>
+      </div>
+      <div>
+        <p class="upeu-brand-text">{{ comedorConfig.nombreComedor }}</p>
+        <p class="upeu-brand-sub">{{ comedorConfig.horario }}</p>
+        <span class="upeu-role-badge admin"><i class="bi bi-shield-check"></i> Administrador</span>
+      </div>
+    </div>
+    <div class="upeu-header-actions">
+      <div class="upeu-user-chip">
+        <div class="upeu-user-avatar">AD</div>
+        <span>{{ currentUser?.nombreCompleto || currentUser?.nombre || 'Administrador' }}</span>
+      </div>
+      <button class="btn-upeu-logout" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="upeu-nav">
+  <ul class="upeu-nav-inner">
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'dashboard'" (click)="cambiarTab('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'menus'" (click)="cambiarTab('menus')"><i class="bi bi-list-ul"></i> Menús</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'becados'" (click)="cambiarTab('becados')"><i class="bi bi-award"></i> Becados</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'reservas'" (click)="cambiarTab('reservas')"><i class="bi bi-calendar-check"></i> Reservas</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'estadisticas'" (click)="cambiarTab('estadisticas')"><i class="bi bi-bar-chart"></i> Estadísticas</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'configuracion'" (click)="cambiarTab('configuracion')"><i class="bi bi-gear"></i> Configuración</a></li>
+  </ul>
+</nav>
+
+<main class="upeu-main">
+<div *ngIf="currentTab === 'dashboard'">
+  <div class="upeu-welcome-banner mb-4">
+    <div>
+      <h2>Panel de Administración</h2>
+      <p>Gestión integral del comedor universitario UPeU</p>
+    </div>
+    <i class="bi bi-graph-up-arrow upeu-welcome-icon"></i>
+  </div>
+  <div *ngIf="loading" class="upeu-loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando datos del dashboard...</p>
+  </div>
+  
+  <!-- Contenido del dashboard -->
+  <div *ngIf="!loading">
+    <!-- Tarjetas de Estadísticas -->
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="stat-card stat-card-blue">
+          <div class="stat-card-header">
+            <h6>Ventas de Hoy</h6>
+            <i class="bi bi-currency-dollar"></i>
+          </div>
+          <p class="stat-card-value">S/. {{ ventasHoy | number:'1.2-2' }}</p>
+          <p class="stat-card-subtitle">{{ reservasHoy }} reservas hoy</p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="stat-card stat-card-orange">
+          <div class="stat-card-header">
+            <h6>Reservas Hoy</h6>
+            <i class="bi bi-calendar-check"></i>
+          </div>
+          <p class="stat-card-value">{{ reservasHoy }}</p>
+          <p class="stat-card-subtitle">{{ recogidasHoy }} recogidas</p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="stat-card stat-card-green">
+          <div class="stat-card-header">
+            <h6>Menús Disponibles</h6>
+            <i class="bi bi-list-task"></i>
+          </div>
+          <p class="stat-card-value">{{ menusDisponibles }}</p>
+          <p class="stat-card-subtitle">{{ menusActivos }} activos hoy</p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="stat-card stat-card-purple">
+          <div class="stat-card-header">
+            <h6>Ingresos Totales</h6>
+            <i class="bi bi-cash-stack"></i>
+          </div>
+          <p class="stat-card-value">S/. {{ ingresosTotales | number:'1.2-2' }}</p>
+          <p class="stat-card-subtitle">{{ reservas.length }} reservas registradas</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actividad Reciente -->
+    <div class="row">
+      <div class="col-lg-6 mb-4">
+        <div class="section-card">
+          <h5 class="section-title">Actividad Reciente</h5>
+          <p class="section-subtitle">Últimas transacciones del sistema</p>
+          
+          <div class="activity-item" *ngFor="let actividad of actividadReciente">
+            <div class="d-flex align-items-center gap-3">
+              <div class="avatar bg-primary text-white">{{ actividad.avatar }}</div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0">{{ actividad.nombre }}</h6>
+                <p class="text-muted mb-0">{{ actividad.descripcion }}</p>
+              </div>
+              <div class="text-end">
+                <p class="mb-0 fw-bold" [class.text-primary]="actividad.tipo !== 'Beca'" [class.text-success]="actividad.tipo === 'Beca'">
+                  <span *ngIf="actividad.tipo === 'Beca'">Becado</span>
+                  <span *ngIf="actividad.tipo !== 'Beca'">S/. {{ actividad.monto | number:'1.2-2' }}</span>
+                </p>
+                <p class="text-muted mb-0 small">{{ actividad.hora }}</p>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="actividadReciente.length === 0" class="upeu-empty py-4">
+            <i class="bi bi-inbox"></i>
+            <p class="mb-0 text-muted">Aún no hay actividad registrada</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menús Más Vendidos -->
+      <div class="col-lg-6 mb-4">
+        <div class="section-card">
+          <h5 class="section-title">Menús Más Vendidos</h5>
+          <p class="section-subtitle">Top 5 por cantidad vendida</p>
+
+          <div class="top-menu-table" *ngIf="menusMasVendidos.length > 0">
+            <div class="top-menu-header">
+              <span class="col-rank">#</span>
+              <span class="col-name">Menú</span>
+              <span class="col-price">P. unit.</span>
+              <span class="col-qty">Vendidos</span>
+              <span class="col-total">Ingresos</span>
+            </div>
+            <div class="top-menu-row" *ngFor="let menu of menusMasVendidos">
+              <span class="col-rank"><span class="ranking-number">{{ menu.posicion }}</span></span>
+              <span class="col-name">{{ menu.nombre }}</span>
+              <span class="col-price">S/. {{ menu.precio | number:'1.2-2' }}</span>
+              <span class="col-qty">{{ menu.vendidos }}</span>
+              <span class="col-total fw-bold text-primary">S/. {{ menu.total | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          <div class="upeu-empty py-4" *ngIf="menusMasVendidos.length === 0">
+            <i class="bi bi-bar-chart"></i>
+            <p class="mb-0 text-muted">Aún no hay ventas registradas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN: Menús -->
+<div *ngIf="currentTab === 'menus'">
+  <div class="upeu-page-header mb-4">
+    <h1 class="upeu-page-title">Supervisión de Menús</h1>
+    <p class="upeu-page-desc">Puedes editar o eliminar menús publicados por los vendedores. La creación la realiza el vendedor.</p>
+  </div>
+  <div class="upeu-section">
+    <div class="upeu-table-wrap">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Fecha</th>
+            <th>Turno</th>
+            <th>Horario</th>
+            <th>Precio</th>
+            <th>Disponibles</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let menu of menus">
+            <td>{{ menu.nombre }}</td>
+            <td>{{ menu.fechaMenu || '—' }}</td>
+            <td>{{ menu.categoria }}</td>
+            <td>{{ menu.disponibleDesde }} - {{ menu.disponibleHasta }}</td>
+            <td>S/. {{ menu.precio | number:'1.2-2' }}</td>
+            <td>{{ menu.stock }}</td>
+            <td>
+              <span class="upeu-badge" [class.success]="menu.publicado" [class.warning]="!menu.publicado">
+                {{ menu.publicado ? 'Publicado' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirModalEditar(menu)" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminarMenu(menu.id)" title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="menus.length === 0">
+            <td colspan="8" class="text-center upeu-empty">
+              <i class="bi bi-inbox"></i>
+              <p class="mb-0">No hay menús registrados por los vendedores</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN: Becados -->
+<div *ngIf="currentTab === 'becados'">
+  <div class="upeu-page-header mb-4">
+    <h1 class="upeu-page-title">Estudiantes Becados</h1>
+    <p class="upeu-page-desc">Gestión de becas alimentarias UPeU</p>
+  </div>
+  <div class="section-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h5 class="section-title mb-0">Gestión de Becados</h5>
+        <p class="section-subtitle mb-0">Administra los estudiantes becados</p>
+      </div>
+      <button class="btn btn-primary" (click)="abrirModalNuevoBecado()">
+        <i class="bi bi-plus-lg"></i> Nuevo Becado
+      </button>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Código</th>
+            <th>DNI</th>
+            <th>Estado</th>
+            <th>Fecha Registro</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let becado of becados">
+            <td>{{ becado.nombre }}</td>
+            <td>{{ becado.codigo }}</td>
+            <td>{{ becado.dni }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="becado.activo" [class.bg-secondary]="!becado.activo">
+                {{ becado.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>{{ becado.fechaRegistro | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-2" (click)="abrirModalEditarBecado(becado)">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminarBecado(becado.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="becados.length === 0">
+            <td colspan="6" class="text-center">
+              <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+              <p class="text-muted mt-2">No hay becados registrados</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN: Reservas -->
+<div *ngIf="currentTab === 'reservas'">
+  <div class="upeu-page-header mb-4">
+    <h1 class="upeu-page-title">Reservas del Sistema</h1>
+    <p class="upeu-page-desc">Todas las reservas registradas en el comedor</p>
+  </div>
+  <div class="section-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h5 class="section-title mb-0">Todas las Reservas</h5>
+        <p class="section-subtitle mb-0">Historial completo de reservas del sistema</p>
+      </div>
+      <div class="d-flex gap-2">
+        <input type="text" class="form-control" placeholder="Buscar reservas..." style="width: 250px;">
+        <button class="btn btn-outline-primary">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID Reserva</th>
+            <th>Estudiante</th>
+            <th>Menú</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let reserva of reservas">
+            <td>#{{ reserva.id }}</td>
+            <td>{{ reserva.estudiante }}</td>
+            <td>{{ reserva.menu }}</td>
+            <td>{{ reserva.fecha | date:'dd/MM/yyyy' }}</td>
+            <td>S/. {{ reserva.total | number:'1.2-2' }}</td>
+            <td>
+              <span class="badge" 
+                    [class.bg-warning]="reserva.estado === 'Pendiente'"
+                    [class.bg-info]="reserva.estado === 'Verificado'"
+                    [class.bg-success]="reserva.estado === 'Recogido'"
+                    [class.bg-secondary]="reserva.estado === 'Cancelado'">
+                {{ reserva.estado }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-primary">{{ reserva.tipo }}</span>
+            </td>
+          </tr>
+          <tr *ngIf="reservas.length === 0">
+            <td colspan="7" class="text-center">
+              <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+              <p class="text-muted mt-2">No hay reservas registradas</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN: Estadísticas -->
+<div *ngIf="currentTab === 'estadisticas'">
+  <div class="upeu-page-header mb-4">
+    <h1 class="upeu-page-title">Estadísticas del Sistema</h1>
+    <p class="upeu-page-desc">Análisis de ventas e ingresos por menú</p>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <div class="stat-card stat-card-purple">
+        <div class="stat-card-header"><h6>Ingresos Totales</h6><i class="bi bi-cash-stack"></i></div>
+        <p class="stat-card-value">S/. {{ ingresosTotales | number:'1.2-2' }}</p>
+        <p class="stat-card-subtitle">Todas las reservas</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="stat-card stat-card-blue">
+        <div class="stat-card-header"><h6>Ventas de Hoy</h6><i class="bi bi-calendar-day"></i></div>
+        <p class="stat-card-value">S/. {{ ventasHoy | number:'1.2-2' }}</p>
+        <p class="stat-card-subtitle">{{ reservasHoy }} reservas hoy</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="stat-card stat-card-green">
+        <div class="stat-card-header"><h6>Menús en catálogo</h6><i class="bi bi-list-ul"></i></div>
+        <p class="stat-card-value">{{ menusDisponibles }}</p>
+        <p class="stat-card-subtitle">{{ menusActivos }} publicados</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 mb-4">
+      <div class="section-card chart-card">
+        <h5 class="section-title">Ventas por Menú</h5>
+        <p class="section-subtitle">Ingresos generados por cada menú</p>
+        <div class="bar-chart" *ngIf="ventasPorMenu.length > 0">
+          <div class="bar-chart-item" *ngFor="let item of ventasPorMenu">
+            <div class="bar-chart-label" [title]="item.nombre">{{ item.nombre }}</div>
+            <div class="bar-chart-track">
+              <div class="bar-chart-fill" [style.width.%]="item.pct"></div>
+            </div>
+            <div class="bar-chart-value">S/. {{ item.monto | number:'1.2-2' }}</div>
+          </div>
+        </div>
+        <div class="upeu-empty py-4" *ngIf="ventasPorMenu.length === 0">
+          <i class="bi bi-bar-chart"></i>
+          <p class="mb-0 text-muted">Sin datos de ventas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+      <div class="section-card chart-card">
+        <h5 class="section-title">Tendencia (7 días)</h5>
+        <p class="section-subtitle">Ingresos diarios de la última semana</p>
+        <div class="line-chart" *ngIf="tendenciaVentas.length > 0">
+          <div class="line-chart-bars">
+            <div class="line-chart-col" *ngFor="let dia of tendenciaVentas">
+              <div class="line-chart-bar-wrap">
+                <div class="line-chart-bar" [style.height.%]="alturaTendencia(dia.pct)"></div>
+              </div>
+              <span class="line-chart-amount" *ngIf="dia.monto > 0">S/.{{ dia.monto | number:'1.0-0' }}</span>
+              <span class="line-chart-label">{{ dia.label }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="upeu-empty py-4" *ngIf="tendenciaVentas.length === 0">
+          <i class="bi bi-graph-up"></i>
+          <p class="mb-0 text-muted">Sin tendencia disponible</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <h5 class="section-title">Top 5 Menús Más Vendidos</h5>
+    <p class="section-subtitle">Precio unitario, cantidad e ingresos</p>
+    <div class="top-menu-table" *ngIf="menusMasVendidos.length > 0">
+      <div class="top-menu-header">
+        <span class="col-rank">#</span>
+        <span class="col-name">Menú</span>
+        <span class="col-price">P. unit.</span>
+        <span class="col-qty">Vendidos</span>
+        <span class="col-total">Ingresos</span>
+      </div>
+      <div class="top-menu-row" *ngFor="let menu of menusMasVendidos">
+        <span class="col-rank"><span class="ranking-number">{{ menu.posicion }}</span></span>
+        <span class="col-name">{{ menu.nombre }}</span>
+        <span class="col-price">S/. {{ menu.precio | number:'1.2-2' }}</span>
+        <span class="col-qty">{{ menu.vendidos }}</span>
+        <span class="col-total fw-bold text-primary">S/. {{ menu.total | number:'1.2-2' }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECCIÓN: Configuración -->
+<div *ngIf="currentTab === 'configuracion'">
+  <div class="section-card">
+    <h5 class="section-title">Configuración del Sistema</h5>
+    <p class="section-subtitle">Ajustes generales de la aplicación</p>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Nombre del Comedor</label>
+          <input type="text" class="form-control" [(ngModel)]="configForm.nombreComedor">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Horario de Atención</label>
+          <input type="text" class="form-control" [(ngModel)]="configForm.horario">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Dirección</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="configForm.direccion"></textarea>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <label class="form-label">Logo</label>
+          <input #logoInput type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" class="d-none" (change)="onLogoSelected($event)">
+          <div class="logo-upload-zone" (click)="logoInput.click()" role="button" tabindex="0">
+            <img *ngIf="configForm.logoUrl" [src]="configForm.logoUrl" alt="Vista previa del logo" class="logo-preview">
+            <ng-container *ngIf="!configForm.logoUrl">
+              <i class="bi bi-cloud-upload"></i>
+              <p class="mb-0 mt-2">Haz clic para subir un nuevo logo</p>
+              <small class="text-muted">PNG, JPG o WEBP · máx. 2 MB</small>
+            </ng-container>
+          </div>
+          <button *ngIf="configForm.logoUrl" type="button" class="btn btn-sm btn-outline-danger mt-2" (click)="quitarLogo()">
+            <i class="bi bi-trash me-1"></i> Quitar logo
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-end mt-4">
+      <button type="button" class="btn btn-primary" (click)="guardarConfiguracion()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear/Editar Menú -->
+<div class="modal" [class.show]="showMenuModal" [style.display]="showMenuModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Menú</h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning small py-2">
+          <i class="bi bi-shield-check me-1"></i>
+          Como administrador puedes modificar menús creados por vendedores, pero no agregar nuevos.
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Nombre del Menú</label>
+            <input type="text" class="form-control" [(ngModel)]="menuForm.nombre">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Fecha</label>
+            <input type="date" class="form-control" [(ngModel)]="menuForm.fechaMenu">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Turno</label>
+            <select class="form-control" [(ngModel)]="menuForm.categoria">
+              <option value="Almuerzo">Almuerzo</option>
+              <option value="Cena">Cena</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Precio (S/.)</label>
+            <input type="number" class="form-control" [(ngModel)]="menuForm.precio" step="0.01">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Hora inicio</label>
+            <input type="time" class="form-control" [(ngModel)]="menuForm.disponibleDesde">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Hora fin</label>
+            <input type="time" class="form-control" [(ngModel)]="menuForm.disponibleHasta">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Disponibles</label>
+            <input type="number" class="form-control" [(ngModel)]="menuForm.stock" min="0">
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label fw-bold">Descripción</label>
+            <textarea class="form-control" rows="2" [(ngModel)]="menuForm.descripcion"></textarea>
+          </div>
+          <div class="col-md-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="menuForm.publicado" id="publicadoSwitch">
+              <label class="form-check-label" for="publicadoSwitch">Menú publicado</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarMenu()">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear/Editar Becado -->
+<div class="modal" [class.show]="showBecadoModal" [style.display]="showBecadoModal ? 'block' : 'none'">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ becadoForm.id ? 'Editar Becado' : 'Registrar Nuevo Becado' }}</h5>
+        <button type="button" class="btn-close" (click)="cerrarModalBecado()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Nombre Completo</label>
+          <input type="text" class="form-control" [(ngModel)]="becadoForm.nombre" placeholder="Nombres y apellidos">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Código Universitario</label>
+          <input type="text" class="form-control" [(ngModel)]="becadoForm.codigo" placeholder="Código de estudiante">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">DNI</label>
+          <input type="text" class="form-control" [(ngModel)]="becadoForm.dni" placeholder="Documento de identidad">
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" [(ngModel)]="becadoForm.activo" id="activoCheck">
+          <label class="form-check-label" for="activoCheck">Beca Activa</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModalBecado()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarBecado()">Guardar Becado</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop Modals -->
+<div class="modal-backdrop" *ngIf="showMenuModal || showBecadoModal" (click)="showMenuModal ? cerrarModal() : cerrarModalBecado()"></div>
+</main>
+<footer class="upeu-footer-strip">
+  <i class="bi bi-mortarboard"></i> Universidad Peruana Unión · Panel Administrativo
+</footer>
+</div>

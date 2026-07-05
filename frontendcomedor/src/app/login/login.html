@@ -1,0 +1,80 @@
+<div class="login-container">
+  <div class="w-100">
+  <div class="card login-card bg-white">
+    <div class="card-body text-center">
+      <div class="header-icon mx-auto mb-3">
+        <i class="bi bi-mortarboard-fill"></i>
+      </div>
+      <h5 class="card-title fw-bold mb-0">Comedor UPeU</h5>
+      <p class="card-text text-muted mb-1">Universidad Peruana Unión</p>
+      <p class="small text-muted mb-4">Sistema de reservas del comedor institucional</p>
+
+      <nav class="mb-4">
+        <div class="nav nav-tabs justify-content-center border-0">
+          <button class="nav-link" [class.active]="role==='VENDEDOR'" (click)="setRole('VENDEDOR')">Vendedor</button>
+          <button class="nav-link" [class.active]="role==='ADMIN'" (click)="setRole('ADMIN')">Admin</button>
+        </div>
+      </nav>
+
+      <div *ngIf="serverChecking" class="alert alert-info py-2 small mb-3">
+        <i class="bi bi-hourglass-split me-1"></i> Verificando conexión con el servidor...
+      </div>
+      <div *ngIf="!serverChecking && serverOnline" class="alert alert-success py-2 small mb-3">
+        <i class="bi bi-check-circle me-1"></i> Servidor conectado
+      </div>
+      <div *ngIf="!serverChecking && !serverOnline" class="alert alert-warning py-2 small mb-3">
+        <i class="bi bi-exclamation-circle me-1"></i> Backend apagado. Ejecuta <strong>start-backend.bat</strong>
+      </div>
+
+      <form (ngSubmit)="login()" #loginForm="ngForm">
+        <!-- Mensaje de error -->
+        <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ errorMessage }}
+          <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+        </div>
+
+        <div class="mb-3 text-start">
+          <label class="form-label small fw-bold text-primary">Usuario</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-person"></i>
+            </span>
+            <input type="text" class="form-control" [(ngModel)]="username" name="username"
+                   [placeholder]="role === 'VENDEDOR' ? 'vendedor' : 'admin'" required #usernameInput="ngModel">
+          </div>
+          <div *ngIf="usernameInput.invalid && (usernameInput.dirty || usernameInput.touched)" class="invalid-feedback d-block">
+            El usuario es requerido
+          </div>
+        </div>
+        <div class="mb-4 text-start">
+          <label class="form-label small fw-bold text-primary">Contraseña</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-lock"></i>
+            </span>
+            <input type="password" class="form-control" [(ngModel)]="password" name="password" placeholder="••••••••" required #passwordInput="ngModel">
+          </div>
+          <div *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)" class="invalid-feedback d-block">
+            Contraseña es requerida
+          </div>
+        </div>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary text-white btn-lg fw-bold"
+                  [disabled]="!loginForm.form.valid || !serverOnline || serverChecking">
+            Acceso {{role === 'VENDEDOR' ? 'Vendedor' : 'Admin'}}
+          </button>
+        </div>
+      </form>
+
+      <div class="footer-info mt-4">
+        <p class="small text-muted mb-1">
+          <i class="bi bi-geo-alt"></i> Carretera Central Km. 19, Ñaña - Lima
+        </p>
+        <p class="small text-muted mb-0">
+          <i class="bi bi-envelope"></i> comedor@upeu.edu.pe
+        </p>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>

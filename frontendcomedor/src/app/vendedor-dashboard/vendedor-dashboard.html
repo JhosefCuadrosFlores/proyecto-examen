@@ -1,0 +1,546 @@
+<div class="upeu-app">
+<!-- Header -->
+<header class="upeu-header">
+  <div class="upeu-header-inner">
+    <div class="upeu-brand">
+      <div class="upeu-logo">
+        <img *ngIf="comedorConfig.logoUrl" [src]="comedorConfig.logoUrl" alt="Logo" class="upeu-logo-img">
+        <i *ngIf="!comedorConfig.logoUrl" class="bi bi-mortarboard-fill"></i>
+      </div>
+      <div>
+        <p class="upeu-brand-text">{{ comedorConfig.nombreComedor }}</p>
+        <p class="upeu-brand-sub">{{ comedorConfig.horario }}</p>
+        <span class="upeu-role-badge vendedor"><i class="bi bi-shop"></i> Vendedor</span>
+      </div>
+    </div>
+    <div class="upeu-header-actions">
+      <div class="upeu-user-chip">
+        <div class="upeu-user-avatar">{{ userInitials }}</div>
+        <span>{{ userDisplayName }}</span>
+      </div>
+      <button class="btn-upeu-logout" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Navegación -->
+<nav class="upeu-nav">
+  <ul class="upeu-nav-inner">
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'dashboard'" (click)="cambiarTab('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'menus'" (click)="cambiarTab('menus')"><i class="bi bi-calendar-plus"></i> Menús del Día</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'pedidos'" (click)="cambiarTab('pedidos')"><i class="bi bi-receipt"></i> Pedidos</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'entregas'" (click)="cambiarTab('entregas')"><i class="bi bi-box-seam"></i> Entregas</a></li>
+    <li><a class="upeu-nav-link" [class.active]="currentTab === 'boletas'" (click)="cambiarTab('boletas')"><i class="bi bi-file-earmark-text"></i> Boletas</a></li>
+  </ul>
+</nav>
+
+<main class="upeu-main">
+
+<!-- DASHBOARD -->
+<div *ngIf="currentTab === 'dashboard'">
+  <div class="upeu-welcome-banner mb-4">
+    <div>
+      <h2>Panel del Vendedor</h2>
+      <p>Gestiona menús, pedidos y entregas del comedor UPeU</p>
+    </div>
+    <i class="bi bi-shop-window upeu-welcome-icon"></i>
+  </div>
+
+  <div *ngIf="loading" class="upeu-loading">
+    <div class="spinner-border" role="status"></div>
+    <p class="mt-3">Cargando datos del dashboard...</p>
+  </div>
+
+  <div *ngIf="!loading">
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="upeu-stat-card">
+          <div class="upeu-stat-top">
+            <p class="upeu-stat-label">Ventas Hoy</p>
+            <div class="upeu-stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+          </div>
+          <p class="upeu-stat-value">S/. {{ ventasHoy | number:'1.2-2' }}</p>
+          <p class="upeu-stat-sub">Ingresos del día</p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="upeu-stat-card">
+          <div class="upeu-stat-top">
+            <p class="upeu-stat-label">Reservas Hoy</p>
+            <div class="upeu-stat-icon orange"><i class="bi bi-clipboard-data"></i></div>
+          </div>
+          <p class="upeu-stat-value">{{ reservasHoy }}</p>
+          <p class="upeu-stat-sub">{{ menusEntregados }} recogidas en total</p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="upeu-stat-card">
+          <div class="upeu-stat-top">
+            <p class="upeu-stat-label">Menús Activos</p>
+            <div class="upeu-stat-icon blue"><i class="bi bi-box-seam"></i></div>
+          </div>
+          <p class="upeu-stat-value">{{ menusPublicados }}</p>
+          <p class="upeu-stat-sub">{{ menusDisponibles.length }} disponibles hoy</p>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="upeu-stat-card">
+          <div class="upeu-stat-top">
+            <p class="upeu-stat-label">Estudiantes Becados</p>
+            <div class="upeu-stat-icon purple"><i class="bi bi-award"></i></div>
+          </div>
+          <p class="upeu-stat-value">{{ estudiantesConBeca }}</p>
+          <p class="upeu-stat-sub">{{ calcularBecasActivasHoy() }} activos hoy</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6 mb-4">
+        <div class="upeu-section">
+          <div class="upeu-section-head">
+            <h5 class="upeu-section-title">Actividad Reciente</h5>
+            <p class="upeu-section-sub">Últimas transacciones del sistema</p>
+          </div>
+          <div class="upeu-list-item" *ngFor="let entrega of ultimasEntregas">
+            <div class="d-flex align-items-center gap-2">
+              <div class="upeu-avatar">{{ entrega.nombre?.substring(0, 2).toUpperCase() }}</div>
+              <div>
+                <h6>{{ entrega.nombre }}</h6>
+                <p class="meta">{{ entrega.menu }} · {{ entrega.tipo }} · {{ entrega.estado }}</p>
+              </div>
+            </div>
+            <div class="text-end">
+              <p class="mb-0 fw-bold" *ngIf="entrega.tipo !== 'Beca'">S/. {{ entrega.total | number:'1.2-2' }}</p>
+              <p class="mb-0 fw-bold" *ngIf="entrega.tipo === 'Beca'">Becado</p>
+              <p class="meta">{{ entrega.hora }}</p>
+            </div>
+          </div>
+          <div *ngIf="ultimasEntregas.length === 0" class="upeu-empty">
+            <i class="bi bi-inbox"></i>
+            <p>No hay entregas recientes</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 mb-4">
+        <div class="upeu-section">
+          <div class="upeu-section-head">
+            <h5 class="upeu-section-title">Menús Más Vendidos</h5>
+            <p class="upeu-section-sub">Top 5 de esta semana</p>
+          </div>
+          <div class="upeu-list-item" *ngFor="let menu of menusMasVendidos; let i = index">
+            <div class="d-flex align-items-center gap-2">
+              <div class="upeu-rank" [class.top]="i === 0">{{ i + 1 }}</div>
+              <div>
+                <h6>{{ menu.nombre }}</h6>
+                <p class="meta">{{ menu.vendidos }} vendidos</p>
+              </div>
+            </div>
+            <p class="mb-0 fw-bold text-primary">S/. {{ menu.total | number:'1.2-2' }}</p>
+          </div>
+          <div *ngIf="menusMasVendidos.length === 0" class="upeu-empty">
+            <i class="bi bi-bar-chart"></i>
+            <p>Sin datos de ventas aún</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MENÚS DEL DÍA -->
+<div *ngIf="currentTab === 'menus'">
+  <div class="upeu-page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="upeu-page-title">Menús del Día</h1>
+      <p class="upeu-page-desc">Publica qué menús se venden hoy, en qué horario y cuántas porciones hay</p>
+    </div>
+    <button class="btn-upeu-primary" (click)="abrirModalCrear()">
+      <i class="bi bi-plus-lg me-1"></i> Agregar Menú del Día
+    </button>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <div class="upeu-stat-card">
+        <div class="upeu-stat-top"><p class="upeu-stat-label">Total Menús</p><div class="upeu-stat-icon blue"><i class="bi bi-list-ul"></i></div></div>
+        <p class="upeu-stat-value">{{ totalMenus }}</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="upeu-stat-card">
+        <div class="upeu-stat-top"><p class="upeu-stat-label">Publicados</p><div class="upeu-stat-icon green"><i class="bi bi-check-circle"></i></div></div>
+        <p class="upeu-stat-value">{{ menusPublicados }}</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="upeu-stat-card">
+        <div class="upeu-stat-top"><p class="upeu-stat-label">Stock Total</p><div class="upeu-stat-icon orange"><i class="bi bi-boxes"></i></div></div>
+        <p class="upeu-stat-value">{{ stockTotal }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="upeu-section mb-3" *ngFor="let menu of menus">
+    <div class="d-flex flex-wrap gap-3 align-items-center">
+      <img [src]="getImageUrl(menu.imagenUrl)" (error)="onImageError($event)" style="width:90px;height:90px;object-fit:cover;border-radius:10px" [alt]="menu.nombre">
+      <div class="flex-grow-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+          <h6 class="fw-bold mb-0">{{ menu.nombre }}</h6>
+          <span class="upeu-badge" [class.success]="menu.publicado" [class.warning]="!menu.publicado">
+            {{ menu.publicado ? 'Publicado' : 'Borrador' }}
+          </span>
+        </div>
+        <p class="text-muted small mb-2">{{ menu.descripcion || 'Sin descripción' }}</p>
+        <div class="d-flex flex-wrap gap-3 small">
+          <span><i class="bi bi-calendar3"></i> {{ menu.fechaMenu || 'Hoy' }}</span>
+          <span><i class="bi bi-sun"></i> {{ menu.horario || menu.categoria || 'Almuerzo' }}</span>
+          <span><i class="bi bi-clock"></i> {{ menu.horaInicio || '11:00' }} - {{ menu.horaFin || '14:00' }}</span>
+          <span><i class="bi bi-box"></i> <strong>{{ menu.disponibles || 0 }}</strong> disponibles</span>
+          <span><i class="bi bi-tag"></i> S/. {{ menu.precio | number:'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" (click)="abrirModalEditar(menu)"><i class="bi bi-pencil"></i> Editar</button>
+        <button class="btn btn-outline-danger btn-sm" (click)="eliminarMenu(menu.id)"><i class="bi bi-trash"></i> Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="menus.length === 0" class="upeu-empty upeu-section">
+    <i class="bi bi-egg-fried"></i>
+    <p>Aún no has publicado menús para hoy.</p>
+    <button class="btn-upeu-primary mt-2" (click)="abrirModalCrear()">Agregar Menú del Día</button>
+  </div>
+</div>
+
+<!-- PEDIDOS -->
+<div *ngIf="currentTab === 'pedidos'">
+  <div class="upeu-page-header">
+    <h1 class="upeu-page-title">Pedidos</h1>
+    <p class="upeu-page-desc">Gestiona las reservas de los estudiantes</p>
+  </div>
+
+  <div class="upeu-tabs">
+    <button class="upeu-tab" [class.active]="filtroPedidos === 'todas'" (click)="setFiltroPedidos('todas')">Todas</button>
+    <button class="upeu-tab" [class.active]="filtroPedidos === 'pendientes'" (click)="setFiltroPedidos('pendientes')">Pendientes</button>
+    <button class="upeu-tab" [class.active]="filtroPedidos === 'completadas'" (click)="setFiltroPedidos('completadas')">Completadas</button>
+    <button class="upeu-tab" [class.active]="filtroPedidos === 'canceladas'" (click)="setFiltroPedidos('canceladas')">Canceladas</button>
+  </div>
+
+  <div class="upeu-section mb-3">
+    <label class="form-label small fw-bold">Buscar pedido</label>
+    <input type="text" class="form-control" [(ngModel)]="buscarPedidoTexto"
+           (ngModelChange)="actualizarReservasVisibles()"
+           placeholder="Nombre del cliente, # reserva o menú">
+  </div>
+
+  <p class="text-muted small mb-3" *ngIf="reservasReales.length > 0">
+    {{ reservasReales.length }} pedido(s) cargados · mostrando {{ reservasVisibles.length }}
+  </p>
+
+  <div class="upeu-section mb-3" *ngFor="let reserva of reservasVisibles">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div>
+        <h6 class="fw-bold mb-1">#{{ reserva.id }} · {{ reserva.menu?.nombre || 'Menú' }}</h6>
+        <p class="text-muted small mb-0">
+          {{ reserva.nombreCliente || reserva.usuario?.nombreCompleto || reserva.usuario?.username || 'Cliente' }} ·
+          {{ reserva.fechaReserva | date:'dd/MM/yyyy HH:mm' }}
+        </p>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="upeu-badge"
+          [class.warning]="reserva.estado === 'PENDIENTE'"
+          [class.info]="reserva.estado === 'PAGO_VERIFICADO'"
+          [class.success]="reserva.estado === 'RECOGIDO'"
+          [class.danger]="reserva.estado === 'CANCELADO'">
+          {{ reserva.estado }}
+        </span>
+        <strong class="text-primary">S/. {{ (reserva.total || 0) | number:'1.2-2' }}</strong>
+        <button class="btn btn-sm btn-outline-primary" (click)="verDetalles(reserva.id)">Detalles</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="reservasVisibles.length === 0" class="upeu-empty upeu-section">
+    <i class="bi bi-inbox"></i>
+    <p>No hay pedidos en esta categoría</p>
+    <button class="btn btn-sm btn-outline-primary mt-2" (click)="recargarPedidos()">Recargar pedidos</button>
+  </div>
+</div>
+
+<!-- ENTREGAS -->
+<div *ngIf="currentTab === 'entregas'">
+  <div class="upeu-page-header">
+    <h1 class="upeu-page-title">Entregas Pendientes</h1>
+    <p class="upeu-page-desc">{{ entregasPendientes }} entregas por confirmar</p>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <div class="upeu-stat-card">
+        <div class="upeu-stat-top"><p class="upeu-stat-label">Pendientes</p><div class="upeu-stat-icon orange"><i class="bi bi-clock"></i></div></div>
+        <p class="upeu-stat-value">{{ entregasPendientes }}</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="upeu-stat-card">
+        <div class="upeu-stat-top"><p class="upeu-stat-label">Pagos por Verificar</p><div class="upeu-stat-icon blue"><i class="bi bi-credit-card"></i></div></div>
+        <p class="upeu-stat-value">{{ pagosPendientes }}</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="upeu-stat-card">
+        <div class="upeu-stat-top"><p class="upeu-stat-label">Boletas Generadas</p><div class="upeu-stat-icon green"><i class="bi bi-file-earmark-check"></i></div></div>
+        <p class="upeu-stat-value">{{ boletasGeneradas }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="upeu-section mb-3" *ngFor="let reserva of reservasPendientes">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="d-flex align-items-center gap-3">
+        <div class="upeu-avatar">{{ reserva.estudiante?.substring(0,2).toUpperCase() }}</div>
+        <div>
+          <h6 class="fw-bold mb-0">{{ reserva.estudiante }}</h6>
+          <p class="text-muted small mb-0">{{ reserva.menu }} · {{ reserva.pago }}</p>
+        </div>
+      </div>
+      <button class="btn btn-success btn-sm" (click)="marcarEntregado(reserva)">
+        <i class="bi bi-check-lg me-1"></i> Marcar Entregado
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="reservasPendientes.length === 0" class="upeu-empty upeu-section">
+    <i class="bi bi-check-circle"></i>
+    <p>No hay entregas pendientes</p>
+  </div>
+</div>
+
+<!-- BOLETAS -->
+<div *ngIf="currentTab === 'boletas'">
+  <div class="upeu-page-header">
+    <h1 class="upeu-page-title">Boletas</h1>
+    <p class="upeu-page-desc">Genera y consulta boletas de pago</p>
+  </div>
+
+  <div class="upeu-section mb-4">
+    <h6 class="fw-bold mb-3">Buscar pedidos / reservas</h6>
+    <div class="row g-2 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label small fw-bold"># reserva, nombre o ID usuario</label>
+        <input type="text" class="form-control" [(ngModel)]="buscarUsuarioId" placeholder="Ej: 1, Estudiante UPeU, 7">
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100" (click)="buscarPedidosUsuario()">
+          <i class="bi bi-search me-1"></i> Buscar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="upeu-section mb-4" *ngIf="pedidosUsuario.length > 0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="fw-bold mb-0">Pedidos encontrados ({{ pedidosUsuario.length }})</h6>
+      <strong>Total: S/. {{ calcularTotalPedidos() | number:'1.2-2' }}</strong>
+    </div>
+    <div class="upeu-list-item" *ngFor="let pedido of pedidosUsuario">
+      <div>
+        <h6>Pedido #{{ pedido.id }}</h6>
+        <p class="meta">{{ pedido.metodoPago }} · {{ pedido.creadoEn | date:'dd/MM/yyyy' }}</p>
+      </div>
+      <strong>S/. {{ pedido.total | number:'1.2-2' }}</strong>
+    </div>
+    <button class="btn btn-success w-100 mt-3" (click)="generarBoleta()">
+      <i class="bi bi-file-earmark-plus me-1"></i> Generar Boleta
+    </button>
+  </div>
+
+  <div class="upeu-section">
+    <div class="upeu-section-head">
+      <h5 class="upeu-section-title">Boletas Emitidas</h5>
+      <p class="upeu-section-sub">{{ boletas.length }} boletas registradas</p>
+    </div>
+    <div class="upeu-list-item" *ngFor="let boleta of boletas">
+      <div>
+        <h6>Boleta #{{ boleta.numero || boleta.id }}</h6>
+        <p class="meta">{{ boleta.estudianteNombre || 'Cliente' }} · {{ boleta.menu?.nombre || 'Menú' }} · {{ boleta.creadoEn | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      <strong>S/. {{ boleta.monto || boleta.total | number:'1.2-2' }}</strong>
+    </div>
+    <div *ngIf="boletas.length === 0" class="upeu-empty">
+      <i class="bi bi-file-earmark"></i>
+      <p>No hay boletas emitidas</p>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- Modal Menú -->
+<div class="upeu-modal-backdrop" *ngIf="showMenuModal" (click)="cerrarModal()"></div>
+<div class="upeu-modal" [class.show]="showMenuModal" *ngIf="showMenuModal">
+  <div class="upeu-modal-dialog">
+    <div class="upeu-modal-content">
+      <div class="upeu-modal-header">
+        <h5 class="upeu-modal-title">{{ menuForm.id ? 'Editar Menú del Día' : 'Agregar Menú del Día' }}</h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="upeu-modal-body">
+        <div class="alert alert-info small py-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Define el menú que venderás, la fecha, el horario de atención y las porciones disponibles.
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nombre del menú *</label>
+          <input type="text" class="form-control" [(ngModel)]="menuForm.nombre" placeholder="Ej: Menú Ejecutivo">
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Fecha de venta *</label>
+            <input type="date" class="form-control" [(ngModel)]="menuForm.fechaMenu">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Turno *</label>
+            <select class="form-select" [(ngModel)]="menuForm.categoria" (change)="onCategoriaChange()">
+              <option value="Almuerzo">Almuerzo</option>
+              <option value="Cena">Cena</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Hora inicio *</label>
+            <input type="time" class="form-control" [(ngModel)]="menuForm.disponibleDesde">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Hora fin *</label>
+            <input type="time" class="form-control" [(ngModel)]="menuForm.disponibleHasta">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Disponibles *</label>
+            <input type="number" class="form-control" [(ngModel)]="menuForm.stock" min="1" placeholder="50">
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Precio (S/.) *</label>
+            <input type="number" class="form-control" [(ngModel)]="menuForm.precio" min="0" step="0.5">
+          </div>
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="menuForm.publicado" id="pubCheck">
+              <label class="form-check-label" for="pubCheck">Publicar para estudiantes</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Descripción</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="menuForm.descripcion" placeholder="Arroz, lomo saltado, ensalada y refresco"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Imagen (opcional)</label>
+          <input type="file" id="fileInput" class="d-none" accept="image/*" (change)="onFileSelected($event)">
+          <div class="border rounded p-3 text-center" style="cursor:pointer;border-style:dashed!important" (click)="triggerFileInput()">
+            <i class="bi bi-cloud-upload fs-3 text-muted"></i>
+            <p class="mb-0 small text-muted">{{ selectedFile ? selectedFile.name : 'Clic para subir imagen' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="upeu-modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarMenu()">
+          <i class="bi bi-check-lg me-1"></i> Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle Pedido -->
+<div class="upeu-modal-backdrop" *ngIf="showDetalleModal" (click)="cerrarDetalleModal()"></div>
+<div class="upeu-modal" [class.show]="showDetalleModal" *ngIf="showDetalleModal && pedidoDetalle">
+  <div class="upeu-modal-dialog">
+    <div class="upeu-modal-content">
+      <div class="upeu-modal-header">
+        <h5 class="upeu-modal-title">Pedido #{{ pedidoDetalle.id }}</h5>
+        <button type="button" class="btn-close" (click)="cerrarDetalleModal()"></button>
+      </div>
+      <div class="upeu-modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="text-muted small">Cliente</label>
+            <p class="fw-bold mb-0">{{ pedidoDetalle.cliente }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Estado</label>
+            <p class="mb-0">
+              <span class="upeu-badge"
+                [class.warning]="pedidoDetalle.estado === 'PENDIENTE'"
+                [class.info]="pedidoDetalle.estado === 'PAGO_VERIFICADO'"
+                [class.success]="pedidoDetalle.estado === 'RECOGIDO'"
+                [class.danger]="pedidoDetalle.estado === 'CANCELADO'">
+                {{ pedidoDetalle.estado }}
+              </span>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Menú</label>
+            <p class="fw-bold mb-0">{{ pedidoDetalle.menu }}</p>
+            <p class="text-muted small mb-0" *ngIf="pedidoDetalle.menuDescripcion">{{ pedidoDetalle.menuDescripcion }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Turno / Horario</label>
+            <p class="mb-0">{{ pedidoDetalle.horario }}</p>
+          </div>
+          <div class="col-md-4">
+            <label class="text-muted small">Cantidad</label>
+            <p class="fw-bold mb-0">{{ pedidoDetalle.cantidad }}</p>
+          </div>
+          <div class="col-md-4">
+            <label class="text-muted small">Precio unitario</label>
+            <p class="fw-bold mb-0">S/. {{ pedidoDetalle.precioUnitario | number:'1.2-2' }}</p>
+          </div>
+          <div class="col-md-4">
+            <label class="text-muted small">Total</label>
+            <p class="fw-bold text-primary mb-0">S/. {{ pedidoDetalle.total | number:'1.2-2' }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Método de pago</label>
+            <p class="mb-0">{{ pedidoDetalle.metodoPago }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">N.º operación</label>
+            <p class="mb-0">{{ pedidoDetalle.numeroOperacion }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Fecha reserva</label>
+            <p class="mb-0">{{ pedidoDetalle.fecha | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Tipo</label>
+            <p class="mb-0">{{ pedidoDetalle.tipo }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="upeu-modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarDetalleModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="upeu-footer-strip">
+  <i class="bi bi-mortarboard"></i> Universidad Peruana Unión · Panel Vendedor
+</footer>
+</div>
